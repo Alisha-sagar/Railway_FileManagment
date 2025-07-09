@@ -24,10 +24,10 @@ class File(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     filename = db.Column(db.Text, nullable=False)
-    filepath = db.Column(db.Text, nullable=False)
+    filepath = db.Column(db.Text, nullable=True)  # Allow null for consistency
     uploaded_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-    file_code = db.Column(db.String(100), unique=True)
+    file_code = db.Column(db.String(100), unique=True, nullable=False)
     tags = db.Column(db.String(255))
     cabinet = db.Column(db.String(100))
     shelf = db.Column(db.String(100))
@@ -37,3 +37,18 @@ class File(db.Model):
 
     def __repr__(self):
         return f"<File {self.filename}>"
+
+
+# ------------------- Recycle Bin Model -------------------
+class RecycleBin(db.Model):
+    __tablename__ = 'recycle_bin'
+
+    id = db.Column(db.Integer, primary_key=True)
+    file_code = db.Column(db.String(100), nullable=False)
+    filename = db.Column(db.Text, nullable=False)
+    filepath = db.Column(db.Text)
+    deleted_at = db.Column(db.DateTime, default=datetime.utcnow)
+    user_id = db.Column(db.Integer, nullable=False)
+
+    def __repr__(self):
+        return f"<RecycleBin File {self.filename}>"

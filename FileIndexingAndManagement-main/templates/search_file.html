@@ -5,37 +5,55 @@
   <title>Search File</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet" />
   <style>
-    body {
-      background: linear-gradient(135deg, #735DA5, #D3C5E5);
-      background-size: 200% 200%;
-      animation: bg-animate 8s ease infinite;
-      min-height: 100vh;
+    body, html {
       margin: 0;
+      padding: 0;
+      height: 100%;
+      font-family: 'Segoe UI', sans-serif;
+      overflow-x: hidden;
+    }
+
+    .video-bg {
+      position: fixed;
+      top: 0;
+      left: 0;
+      min-width: 100%;
+      min-height: 100%;
+      object-fit: cover;
+      z-index: -1;
+    }
+
+    .logo-fixed {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 185px;
+      z-index: 10;
+      padding: 10px;
+    }
+
+    .container-wrapper {
       display: flex;
       align-items: center;
       justify-content: center;
+      min-height: 100vh;
       padding: 40px 20px;
-      font-family: 'Segoe UI', sans-serif;
     }
 
-    @keyframes bg-animate {
-      0%, 100% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
+    .search-box {
+      background: rgba(255, 255, 255, 0.95);
+      padding: 40px 30px;
+      border-radius: 20px;
+      box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+      max-width: 800px;
+      width: 100%;
+      animation: fade-in-up 0.6s ease-out both;
+      z-index: 2;
     }
 
     @keyframes fade-in-up {
       from { opacity: 0; transform: translateY(20px); }
       to { opacity: 1; transform: translateY(0); }
-    }
-
-    .search-box {
-      background: white;
-      padding: 40px 30px;
-      border-radius: 20px;
-      box-shadow: 0 15px 40px rgba(0, 0, 0, 0.1);
-      width: 100%;
-      max-width: 800px;
-      animation: fade-in-up 0.6s ease-out both;
     }
 
     h2 {
@@ -53,9 +71,10 @@
     .result-item {
       background: #f5f0fa;
       border: 1px solid #d8cde9;
-      padding: 12px 18px;
+      padding: 12px 18px 50px;
       margin-bottom: 12px;
       border-radius: 10px;
+      position: relative;
       animation: fade-in-up 0.3s ease both;
     }
 
@@ -69,46 +88,134 @@
       color: white;
     }
 
+    .delete-btn, .edit-btn {
+      position: absolute;
+      right: 10px;
+      background: transparent;
+      border: none;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+
+    .delete-btn {
+      top: 10px;
+      color: #dc3545;
+    }
+
+    .edit-btn {
+      top: 38px;
+      color: #0d6efd;
+    }
+
+    .delete-btn:hover, .edit-btn:hover {
+      text-decoration: underline;
+    }
+
+    #loadingSpinner {
+      display: none;
+      text-align: center;
+      margin-top: 10px;
+    }
+
     @media (max-width: 768px) {
       .search-box {
         padding: 30px 20px;
       }
     }
   </style>
+
   <script>
     async function searchFile() {
       const query = document.getElementById('searchInput').value.trim();
-      const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
-      const files = await res.json();
-      const resultList = document.getElementById('results');
-      resultList.innerHTML = '';
-      if (files.length === 0) {
-        resultList.innerHTML = '<p>No results found.</p>';
-      } else {
-        files.forEach(file => {
-          const item = document.createElement('div');
-          item.className = 'result-item';
-          item.innerHTML = `
-            <strong>${file.filename}</strong> (${file.file_code})<br>(${file.file_code})<br>
-            <small>📦 Location: ${file.location}</small>`;
-          resultList.appendChild(item);
-        });
+      const spinner = document.getElementById('loadingSpinner');
+      const results = document.getElementById('results');
+
+      results.innerHTML = '';
+      spinner.style.display = 'block';
+
+      if (query === "") {
+        spinner.style.display = 'none';
+        return;
       }
+
+      try {
+        const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
+        if (!res.ok) throw new Error("Search failed");
+
+        const files = await res.json();
+        spinner.style.display = 'none';
+
+        if (files.length === 0) {
+          results.innerHTML = '<p>No results found.</p>';
+        } else {
+          files.forEach(file => {
+            const item = document.createElement('div');
+            item.className = 'result-item';
+            item.innerHTML = `
+              <button class="delete-btn" onclick="deleteFile('${file.file_code}')">🗑️ Delete</button>
+              <button class="edit-btn" onclick="editFile('${file.file_code}')">✏️ Edit</button>
+              <strong>${file.filename}</strong> (${file.file_code})<br>
+              <small>📦 Location: ${file.location}</small>`;
+            results.appendChild(item);
+          });
+        }
+      } catch (err) {
+        spinner.style.display = 'none';
+        results.innerHTML = '<p class="text-danger">Error loading results.</p>';
+      }
+    }
+
+    async function deleteFile(fileCode) {
+      if (!confirm(`Are you sure you want to delete file "${fileCode}"?`)) return;
+
+      try {
+        const res = await fetch('/delete_file', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ file_code: fileCode })
+        });
+
+        const data = await res.json();
+        alert(data.message || data.error);
+        searchFile();
+      } catch (err) {
+        alert("Failed to delete file.");
+      }
+    }
+
+    function editFile(fileCode) {
+      window.location.href = `/edit_file/${fileCode}`;
     }
   </script>
 </head>
+
 <body>
-  <div class="search-box">
-    <h2>🔍 Search File</h2>
-    <input
-      type="text"
-      id="searchInput"
-      class="form-control mb-4"
-      placeholder="Search by name or code..."
-      onkeyup="searchFile()"
-    />
-    <div id="results"></div>
-    <a href="/" class="btn btn-outline-primary mt-4 w-100">⬅️ Back to Add File</a>
+
+  <video autoplay muted loop class="video-bg">
+    <source src="{{ url_for('static', filename='train.mp4') }}" type="video/mp4">
+    Your browser does not support the video tag.
+  </video>
+
+  <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" class="logo-fixed" />
+
+  <div class="container-wrapper">
+    <div class="search-box" role="search">
+      <h2>🔍 Search File</h2>
+      <input
+        type="text"
+        id="searchInput"
+        class="form-control mb-3"
+        placeholder="Search by name or code..."
+        onkeyup="searchFile()"
+        aria-label="Search files"
+      />
+      <div id="loadingSpinner">
+        <div class="spinner-border text-primary" role="status"></div>
+      </div>
+      <div id="results" aria-live="polite"></div>
+      <a href="/" class="btn btn-outline-primary mt-4 w-100">⬅️ Back to Add File</a>
+    </div>
   </div>
+
 </body>
 </html>

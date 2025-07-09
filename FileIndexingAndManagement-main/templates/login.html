@@ -13,25 +13,43 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      background: linear-gradient(135deg, #735DA5, #D3C5E5);
-      background-size: 200% 200%;
-      animation: bg-animate 8s ease infinite;
+      background: url("{{ url_for('static', filename='main.png') }}") no-repeat center center fixed;
+      background-size: cover;
+      position: relative;
     }
 
-    @keyframes bg-animate {
-      0%, 100% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
+    body::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      z-index: 0;
+    }
+
+    #logo {
+      position: absolute;
+      top: 0;
+      left: 0;
+      padding: 10px;
+      z-index: 10;
+    }
+
+    #logo img {
+      height: 180px;
+      width: auto;
     }
 
     #container {
-      background: #fff;
+      background: rgba(255, 255, 255, 0.95);
       width: 750px;
       max-width: 95%;
       border-radius: 20px;
-      box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+      box-shadow: 0 15px 40px rgba(0, 0, 0, 0.25);
       overflow: hidden;
       display: flex;
       flex-direction: column;
+      z-index: 5;
     }
 
     .toggle-buttons {
@@ -53,7 +71,7 @@
 
     .toggle-buttons button.active {
       color: #fff;
-      background: #735DA5;
+      background: #0D47A1;
     }
 
     .panel-wrapper {
@@ -71,7 +89,7 @@
 
     .panel h3 {
       margin-bottom: 25px;
-      color: #735DA5;
+      color: #0D47A1;
       text-align: center;
     }
 
@@ -86,14 +104,14 @@
     }
 
     .panel form input:focus {
-      border-color: #735DA5;
-      box-shadow: 0 0 0 2px rgba(115, 93, 165, 0.2);
+      border-color: #0D47A1;
+      box-shadow: 0 0 0 2px rgba(13, 71, 161, 0.2);
       outline: none;
     }
 
     .panel form button {
       width: 100%;
-      background: #735DA5;
+      background: #0D47A1;
       border: none;
       color: white;
       padding: 12px;
@@ -104,14 +122,14 @@
     }
 
     .panel form button:hover {
-      background: #5a4785;
+      background: #0a3578;
     }
 
     .forgot-link {
       display: block;
       text-align: right;
       font-size: 14px;
-      color: #735DA5;
+      color: #0D47A1;
       text-decoration: none;
       margin-top: -10px;
       margin-bottom: 20px;
@@ -119,7 +137,7 @@
     }
 
     .forgot-link:hover {
-      color: #5a4785;
+      color: #0a3578;
     }
 
     .alert {
@@ -133,10 +151,16 @@
       .panel-wrapper { flex-direction: column; width: 100%; transform: translateX(0) !important; }
       .panel { width: 100%; }
       .toggle-buttons { flex-direction: column; }
+      #logo img { height: 100px; }
     }
   </style>
 </head>
 <body>
+  <!-- Logo in Top-Left -->
+  <div id="logo">
+    <img src="{{ url_for('static', filename='main1.png') }}" alt="Logo" />
+  </div>
+
   <div id="container">
     <!-- Toggle Buttons -->
     <div class="toggle-buttons">
@@ -185,7 +209,7 @@
   <div class="modal fade" id="forgotModal" tabindex="-1" aria-labelledby="forgotModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content border-0 rounded-4">
-        <div class="modal-header" style="background-color:#735DA5; color:white; border-top-left-radius:1rem; border-top-right-radius:1rem;">
+        <div class="modal-header" style="background-color:#0D47A1; color:white; border-top-left-radius:1rem; border-top-right-radius:1rem;">
           <h5 class="modal-title" id="forgotModalLabel">Reset Password</h5>
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
@@ -195,7 +219,7 @@
             <input type="text" class="form-control" name="username" required placeholder="Username">
           </div>
           <div class="modal-footer px-4 pb-4">
-            <button type="submit" class="btn btn-primary w-100" style="background:#735DA5; border:none;">Send Reset Link</button>
+            <button type="submit" class="btn btn-primary w-100" style="background:#0D47A1; border:none;">Send Reset Link</button>
           </div>
         </form>
       </div>

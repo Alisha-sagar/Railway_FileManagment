@@ -4,32 +4,56 @@
   <meta charset="UTF-8" />
   <title>Add File</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif&family=Open+Sans&family=Poppins&display=swap" rel="stylesheet">
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <style>
-    body {
-      background: linear-gradient(135deg, #735DA5, #D3C5E5);
-      background-size: 200% 200%;
-      animation: bg-animate 8s ease infinite;
-      min-height: 100vh;
+    :root {
+      --primary: #0D47A1;
+      --secondary: #E3F2FD;
+      --accent: #FFC107;
+    }
+
+    body, html {
       margin: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-family: 'Segoe UI', sans-serif;
-      padding: 40px 20px;
+      padding: 0;
+      height: 100%;
+      font-family: 'Open Sans', 'Poppins', sans-serif;
+      overflow-x: hidden;
+      position: relative;
     }
 
-    @keyframes bg-animate {
-      0%, 100% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
+    /* Background Video */
+    .video-bg {
+      position: fixed;
+      top: 0;
+      left: 0;
+      min-width: 100%;
+      min-height: 100%;
+      object-fit: cover;
+      z-index: -1;
     }
 
-    @keyframes fade-slide {
-      from { opacity: 0; transform: translateY(30px); }
-      to { opacity: 1; transform: translateY(0); }
+    /* Splash Logo */
+    .splash-logo {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(1);
+      opacity: 1;
+      z-index: 9999;
+      transition: all 1.5s ease-in-out;
+      width: 500px;
+    }
+
+    .splash-logo.done {
+      top: 0;
+      left: 0;
+      transform: translate(0, 0) scale(1);
+      width: 185px;
     }
 
     .form-box {
-      background: white;
+      background: rgba(255, 255, 255, 0.9);
       padding: 50px 40px;
       border-radius: 20px;
       box-shadow: 0 15px 40px rgba(0, 0, 0, 0.1);
@@ -37,52 +61,57 @@
       max-width: 1000px;
       animation: fade-slide 0.7s ease-out both;
       position: relative;
+      z-index: 1;
+      margin: 60px auto;
     }
 
-    h2 {
-      color: #735DA5;
-      margin-bottom: 30px;
+    @keyframes fade-slide {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    h2, h4 {
+      color: var(--primary);
+      font-family: 'Noto Serif', serif;
       font-weight: bold;
       text-align: center;
     }
 
     .form-control:focus {
-      border-color: #735DA5;
-      box-shadow: 0 0 0 2px rgba(115, 93, 165, 0.2);
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(13, 71, 161, 0.2);
     }
 
     .btn-primary {
-      background-color: #735DA5;
+      background-color: var(--primary);
       border: none;
     }
 
     .btn-primary:hover {
-      background-color: #5a4785;
+      background-color: #08306b;
     }
 
     .btn-secondary {
-      background-color: #D3C5E5;
-      color: #3c2d60;
+      background-color: var(--accent);
+      color: black;
       border: none;
     }
 
     .btn-secondary:hover {
-      background-color: #c2b3db;
+      background-color: #e6b800;
     }
 
     .btn-outline-primary {
-      color: #735DA5;
-      border-color: #735DA5;
+      color: var(--primary);
+      border-color: var(--primary);
     }
 
     .btn-outline-primary:hover {
-      background-color: #735DA5;
+      background-color: var(--primary);
       color: white;
     }
 
-    .btn-outline-danger {
-      border-color: #dc3545;
-    }
+    .btn-outline-danger { border-color: #dc3545; }
 
     .logout-btn {
       position: absolute;
@@ -90,15 +119,19 @@
       right: 20px;
     }
 
-    hr {
-      border-top: 1px solid #eee;
+    .file-table th, .file-table td {
+      vertical-align: middle;
     }
 
-    @media (max-width: 768px) {
-      .form-box {
-        padding: 30px 20px;
-      }
+    .table-wrap {
+      max-height: 250px;
+      overflow-y: auto;
+    }
 
+    hr { border-top: 1px solid #eee; }
+
+    @media (max-width: 768px) {
+      .form-box { padding: 30px 20px; }
       .logout-btn {
         position: static;
         margin-bottom: 10px;
@@ -109,6 +142,16 @@
   </style>
 </head>
 <body>
+
+  <!-- Background Video -->
+  <video autoplay muted loop class="video-bg">
+    <source src="{{ url_for('static', filename='train.mp4') }}" type="video/mp4">
+    Your browser does not support the video tag.
+  </video>
+
+  <!-- Animated Logo -->
+  <img src="{{ url_for('static', filename='logo.png') }}" id="logo" class="splash-logo" alt="Logo" />
+
   <div class="form-box">
     <a href="/logout" class="btn btn-outline-danger logout-btn">🚪 Logout</a>
     <h2>➕ Add New File</h2>
@@ -139,10 +182,89 @@
     </form>
 
     <hr class="my-4" />
-    <div class="d-flex flex-wrap gap-2">
+    <div class="d-flex flex-wrap gap-2 mb-4">
       <a href="/export" class="btn btn-success flex-fill">📤 Export All Files (Excel)</a>
       <a href="/search" class="btn btn-outline-primary flex-fill">🔍 Go to Search</a>
     </div>
+
+    <hr class="my-4" />
+    <div class="d-flex justify-content-between align-items-center">
+      <button class="btn btn-outline-dark" onclick="toggleRecycleBin()">🗑️ Recycle Bin</button>
+      <button id="emptyBinBtn" class="btn btn-outline-danger btn-sm d-none" onclick="emptyRecycleBin()">Empty</button>
+    </div>
+
+    <div id="recycleSection" class="table-responsive table-wrap mt-3 d-none">
+      <table class="table table-bordered table-sm file-table">
+        <thead>
+          <tr>
+            <th>File Name</th>
+            <th>Code</th>
+            <th>Deleted At</th>
+            <th>Restore</th>
+          </tr>
+        </thead>
+        <tbody id="recycleList"></tbody>
+      </table>
+    </div>
   </div>
+
+  <script>
+    function loadRecycleBin() {
+      $.get('/recycle_bin', function(files) {
+        let rows = files.map(f => `
+          <tr>
+            <td>${f.filename}</td>
+            <td>${f.file_code}</td>
+            <td>${new Date(f.deleted_at).toLocaleString()}</td>
+            <td><button class="btn btn-sm btn-outline-success" onclick="restoreFile('${f.file_code}')">♻️</button></td>
+          </tr>
+        `);
+        $('#recycleList').html(rows.join(''));
+      });
+    }
+
+    function restoreFile(code) {
+      $.ajax({
+        url: '/restore_file',
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({ file_code: code }),
+        success: res => {
+          alert(res.message);
+          loadRecycleBin();
+        },
+        error: err => alert("Restore failed")
+      });
+    }
+
+    function emptyRecycleBin() {
+      if (!confirm("Permanently delete all items in the Recycle Bin?")) return;
+      $.ajax({
+        url: '/empty_recycle_bin',
+        method: 'DELETE',
+        success: res => {
+          alert(res.message);
+          loadRecycleBin();
+        },
+        error: err => alert("Error emptying Recycle Bin")
+      });
+    }
+
+    function toggleRecycleBin() {
+      const section = document.getElementById('recycleSection');
+      const emptyBtn = document.getElementById('emptyBinBtn');
+      const isVisible = !section.classList.contains('d-none');
+      section.classList.toggle('d-none', isVisible);
+      emptyBtn.classList.toggle('d-none', isVisible);
+      if (!isVisible) loadRecycleBin();
+    }
+
+    // Logo splash animation
+    window.onload = () => {
+      setTimeout(() => {
+        document.getElementById('logo').classList.add('done');
+      }, 1000);
+    }
+  </script>
 </body>
 </html>
