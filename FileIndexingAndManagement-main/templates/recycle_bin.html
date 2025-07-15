@@ -77,54 +77,73 @@
   </style>
   <script>
     async function loadRecycleBin() {
-      const res = await fetch('/recycle_bin');
-      const files = await res.json();
-      const list = document.getElementById('recycle-list');
-      list.innerHTML = '';
+      try {
+        const res = await fetch('/recycle_bin');  // FIXED: Changed from '/api/recycle_bin' to '/recycle_bin'
+        const files = await res.json();
+        const list = document.getElementById('recycle-list');
+        list.innerHTML = '';
 
-      if (files.length === 0) {
-        list.innerHTML = '<p class="text-muted">🗑️ No deleted files found.</p>';
-      } else {
-        files.forEach(file => {
-          const item = document.createElement('div');
-          item.className = 'file-item';
-          item.innerHTML = `
-            <strong>${file.filename}</strong> (${file.file_code})<br>
-            <small class="timestamp">🕓 Deleted at: ${file.deleted_at}</small><br>
-            <button class="btn btn-sm btn-outline-success btn-small" onclick="restoreFile('${file.file_code}')">🔁 Restore</button>
-            <button class="btn btn-sm btn-outline-danger btn-small" onclick="deleteFile('${file.file_code}')">❌ Delete</button>
-          `;
-          list.appendChild(item);
-        });
+        if (files.length === 0) {
+          list.innerHTML = '<p class="text-muted">🗑️ No deleted files found.</p>';
+        } else {
+          files.forEach(file => {
+            const item = document.createElement('div');
+            item.className = 'file-item';
+            item.innerHTML = `
+              <strong>${file.filename}</strong> (${file.file_code})<br>
+              <small class="timestamp">🕓 Deleted at: ${file.deleted_at}</small><br>
+              <button class="btn btn-sm btn-outline-success btn-small" onclick="restoreFile('${file.file_code}')">🔁 Restore</button>
+              <button class="btn btn-sm btn-outline-danger btn-small" onclick="permanentlyDelete('${file.file_code}')">❌ Delete</button>
+            `;
+            list.appendChild(item);
+          });
+        }
+      } catch (error) {
+        console.error('Error loading recycle bin:', error);
+        document.getElementById('recycle-list').innerHTML = '<p class="text-danger">❌ Error loading recycle bin</p>';
       }
     }
 
     async function restoreFile(fileCode) {
       if (!confirm('Restore this file?')) return;
 
-      const res = await fetch('/restore_file', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ file_code: fileCode })
-      });
+      try {
+        const res = await fetch('/restore_file', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ file_code: fileCode })
+        });
 
-      const data = await res.json();
-      alert(data.message || data.error);
-      loadRecycleBin();
+        const data = await res.json();
+        alert(data.message || data.error);
+        loadRecycleBin();
+      } catch (error) {
+        console.error('Error restoring file:', error);
+        alert('Error restoring file');
+      }
     }
 
-    async function deleteFile(fileCode) {
-      if (!confirm('Permanently delete this file?')) return;
+    async function permanentlyDelete(fileCode = null) {
+      const confirmMsg = fileCode
+        ? 'Permanently delete this file?'
+        : 'Permanently delete ALL files in Recycle Bin?';
 
-      const res = await fetch('/empty_recycle_bin', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ file_code: fileCode })  // Optional, update backend if needed
-      });
+      if (!confirm(confirmMsg)) return;
 
-      const data = await res.json();
-      alert(data.message || data.error);
-      loadRecycleBin();
+      try {
+        const res = await fetch('/empty_recycle_bin', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ file_code: fileCode }) // file_code = null for full cleanup
+        });
+
+        const data = await res.json();
+        alert(data.message || data.error);
+        loadRecycleBin();
+      } catch (error) {
+        console.error('Error deleting file:', error);
+        alert('Error deleting file');
+      }
     }
 
     window.onload = loadRecycleBin;
@@ -134,7 +153,8 @@
   <div class="recycle-box">
     <h2>🗑️ Recycle Bin</h2>
     <div id="recycle-list"></div>
-    <a href="/" class="btn btn-outline-primary mt-4 w-100">⬅️ Back to Home</a>
+    <button onclick="permanentlyDelete()" class="btn btn-outline-danger mt-3 w-100">❌ Empty Recycle Bin</button>
+    <a href="/" class="btn btn-outline-primary mt-3 w-100">⬅️ Back to Home</a>
   </div>
 </body>
 </html>

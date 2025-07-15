@@ -10,9 +10,9 @@ import pandas as pd
 import os
 import json
 from datetime import datetime
-from sqlalchemy import or_, text
+from sqlalchemy import or_
 
-from models import db, User, File
+from models import db, User, File, RecycleBin
 
 app = Flask(__name__)
 app.secret_key = 'yK@p1A$9vTz3!mB2#qW8^LrXeCfHsJ0u'
@@ -24,6 +24,7 @@ db.init_app(app)
 serializer = URLSafeTimedSerializer(app.secret_key)
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
+
 # ------------------- Middleware -------------------
 def login_required(f):
     @wraps(f)
@@ -33,6 +34,7 @@ def login_required(f):
             return redirect(url_for('login'))
         return f(*args, **kwargs)
     return decorated
+
 
 # ------------------- Auth Routes -------------------
 @app.route('/signup', methods=['GET', 'POST'])
@@ -50,8 +52,10 @@ def signup():
             db.session.add(new_user)
             db.session.commit()
             flash('Signup successful! You can now login.', 'signup')
+
     categories = [cat for cat, msg in get_flashed_messages(with_categories=True)]
     return render_template('login.html', flash_categories=json.dumps(categories))
+
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -66,14 +70,17 @@ def login():
             return redirect(url_for('home'))
         else:
             flash('Invalid credentials. Try again.', 'login')
+
     categories = [cat for cat, msg in get_flashed_messages(with_categories=True)]
     return render_template('login.html', flash_categories=json.dumps(categories))
+
 
 @app.route('/logout')
 def logout():
     session.clear()
     flash('Logged out successfully.', 'info')
     return redirect(url_for('login'))
+
 
 @app.route('/forgot-password', methods=['GET', 'POST'])
 def forgot_password():
@@ -83,12 +90,15 @@ def forgot_password():
         if not user:
             flash("Username doesn't exist", 'danger')
             return redirect(url_for('forgot_password'))
+
         token = serializer.dumps(username, salt='reset-password')
         reset_url = url_for('reset_password', token=token, _external=True)
         print(f"[RESET LINK] {reset_url}")
         flash("Reset link sent! Check console (dev mode).", 'info')
         return redirect(url_for('login'))
+
     return render_template('forgot_password.html')
+
 
 @app.route('/reset-password/<token>', methods=['GET', 'POST'])
 def reset_password(token):
@@ -110,16 +120,19 @@ def reset_password(token):
 
     return render_template('reset_password.html', username=username)
 
+
 # ------------------- Main Routes -------------------
 @app.route('/')
 @login_required
 def home():
     return render_template('add_file.html', username=session.get('user'))
 
+
 @app.route('/search')
 @login_required
 def search_page():
     return render_template('search_file.html')
+
 
 @app.route('/add', methods=['POST'])
 @login_required
@@ -144,6 +157,7 @@ def add_file():
         flash("File added successfully!", "success")
     return redirect(url_for('home'))
 
+
 @app.route('/edit_file/<file_code>', methods=['GET', 'POST'])
 @login_required
 def edit_file(file_code):
@@ -164,6 +178,7 @@ def edit_file(file_code):
 
     return render_template('edit_file.html', file=file)
 
+
 @app.route('/api/search')
 @login_required
 def search():
@@ -183,6 +198,7 @@ def search():
         } for f in results
     ])
 
+
 @app.route('/export')
 @login_required
 def export_excel():
@@ -199,19 +215,36 @@ def export_excel():
     df.to_excel(path, index=False)
     return send_file(path, as_attachment=True)
 
+
 @app.route('/import', methods=['POST'])
 @login_required
 def import_excel():
-    file = request.files['excel_file']
-    if file and file.filename.endswith('.xlsx'):
-        filepath = os.path.join(app.config['UPLOAD_FOLDER'], secure_filename(file.filename))
-        file.save(filepath)
+    file = request.files.get('excel_file')
+    if not file or not file.filename.endswith('.xlsx'):
+        flash("Invalid file type. Please upload a .xlsx Excel file.", "danger")
+        return redirect(url_for('home'))
+
+    filepath = os.path.join(app.config['UPLOAD_FOLDER'], secure_filename(file.filename))
+    file.save(filepath)
+
+    try:
         df = pd.read_excel(filepath)
+        df.columns = [col.lower() for col in df.columns]
+        required_cols = {'filename', 'file_code', 'cabinet', 'box', 'shelf'}
+        if not required_cols.issubset(set(df.columns)):
+            flash(f"Excel must contain columns: {', '.join(required_cols)}", "danger")
+            return redirect(url_for('home'))
+
+        added_count = 0
         for _, row in df.iterrows():
-            if not File.query.filter_by(file_code=row['file_code']).first():
+            file_code = str(row.get('file_code')).strip()
+            if not file_code:
+                continue
+
+            if not File.query.filter_by(file_code=file_code).first():
                 new_file = File(
-                    filename=row['filename'],
-                    file_code=row['file_code'],
+                    filename=row.get('filename', ''),
+                    file_code=file_code,
                     tags=row.get('tags', ''),
                     cabinet=row.get('cabinet', ''),
                     shelf=row.get('shelf', ''),
@@ -220,89 +253,101 @@ def import_excel():
                     user_id=session['user_id']
                 )
                 db.session.add(new_file)
+                added_count += 1
+
         db.session.commit()
-        flash("Excel data imported!", "success")
-    else:
-        flash("Invalid file type. Please upload .xlsx", "danger")
+        flash(f"Imported {added_count} new files successfully!", "success")
+    except Exception as e:
+        print(f"[IMPORT ERROR] {e}")
+        flash("Error processing Excel file. Check the file format and try again.", "danger")
+
     return redirect(url_for('home'))
 
-# ------------------- Recycle Bin -------------------
+
+# ------------------- Recycle Bin Routes -------------------
+# ------------------- Recycle Bin Routes -------------------
 @app.route('/delete_file', methods=['POST'])
 @login_required
 def delete_file():
     data = request.get_json()
-    file = None
-    if 'file_code' in data:
-        file = File.query.filter_by(file_code=data['file_code']).first()
-    elif 'filename' in data:
-        file = File.query.filter_by(filename=data['filename']).first()
+    file = File.query.filter_by(file_code=data['file_code']).first()
 
     if not file:
         return jsonify({'error': 'File not found'}), 404
 
-    db.session.execute(text("""
-        INSERT INTO recycle_bin (file_code, filename, filepath, user_id)
-        VALUES (:code, :name, :path, :user_id)
-    """), {
-        'code': file.file_code,
-        'name': file.filename,
-        'path': file.filepath,
-        'user_id': file.user_id
-    })
-
+    # FIXED: Store all file data in recycle bin
+    recycled = RecycleBin(
+        file_code=file.file_code,
+        filename=file.filename,
+        filepath=file.filepath,
+        tags=file.tags,
+        cabinet=file.cabinet,
+        shelf=file.shelf,
+        box=file.box,
+        user_id=file.user_id
+    )
+    db.session.add(recycled)
     db.session.delete(file)
     db.session.commit()
+
     return jsonify({'message': f'File "{file.filename}" moved to Recycle Bin'}), 200
 
-@app.route('/recycle_bin')
-@login_required
-def view_recycle_bin():
-    result = db.session.execute(text("""
-        SELECT id, file_code, filename, filepath, deleted_at
-        FROM recycle_bin
-        WHERE user_id = :uid
-        ORDER BY deleted_at DESC
-    """), {'uid': session['user_id']})
 
-    files = [dict(row._mapping) for row in result]
-    return jsonify(files), 200
+@app.route('/recycle_bin', methods=['GET'])
+@login_required
+def get_recycle_bin():
+    files = RecycleBin.query.filter_by(user_id=session['user_id'])\
+                .order_by(RecycleBin.deleted_at.desc()).all()
+    return jsonify([{
+        'file_code': f.file_code,
+        'filename': f.filename,
+        'deleted_at': f.deleted_at.strftime('%Y-%m-%d %H:%M:%S')
+    } for f in files])
+
 
 @app.route('/restore_file', methods=['POST'])
 @login_required
 def restore_file():
     data = request.get_json()
     file_code = data.get('file_code')
+    item = RecycleBin.query.filter_by(file_code=file_code, user_id=session['user_id']).first()
 
-    result = db.session.execute(text("""
-        SELECT * FROM recycle_bin
-        WHERE file_code = :code AND user_id = :uid
-    """), {'code': file_code, 'uid': session['user_id']}).first()
-
-    if not result:
+    if not item:
         return jsonify({'error': 'File not found in Recycle Bin'}), 404
 
-    new_file = File(
-        file_code=result.file_code,
-        filename=result.filename,
-        filepath=result.filepath,
-        user_id=session['user_id']
+    # FIXED: Restore all file data including location information
+    restored = File(
+        file_code=item.file_code,
+        filename=item.filename,
+        filepath=item.filepath,
+        tags=item.tags,
+        cabinet=item.cabinet,
+        shelf=item.shelf,
+        box=item.box,
+        user_id=item.user_id
     )
-    db.session.add(new_file)
-
-    db.session.execute(text("DELETE FROM recycle_bin WHERE id = :id"), {'id': result.id})
+    db.session.add(restored)
+    db.session.delete(item)
     db.session.commit()
 
-    return jsonify({'message': f'File "{result.filename}" restored successfully'}), 200
+    return jsonify({'message': f'File "{item.filename}" restored successfully'}), 200
+
 
 @app.route('/empty_recycle_bin', methods=['DELETE'])
 @login_required
 def empty_recycle_bin():
-    db.session.execute(text("""
-        DELETE FROM recycle_bin
-        WHERE user_id = :uid
-    """), {'uid': session['user_id']})
+    data = request.get_json()
+    file_code = data.get('file_code')
+
+    if file_code:
+        deleted = RecycleBin.query.filter_by(file_code=file_code, user_id=session['user_id']).delete()
+        msg = f'File "{file_code}" permanently deleted.' if deleted else "File not found."
+    else:
+        RecycleBin.query.filter_by(user_id=session['user_id']).delete()
+        msg = 'Recycle Bin emptied successfully.'
+
     db.session.commit()
-    return jsonify({'message': 'Recycle Bin emptied successfully'}), 200
+    return jsonify({'message': msg}), 200
 
 # ------------------- Init -------------------
 if __name__ == '__main__':

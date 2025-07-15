@@ -13,10 +13,10 @@ class User(db.Model):
     password = db.Column(db.String(255), nullable=False)
 
     files = db.relationship('File', backref='owner', lazy=True)
+    recycle_files = db.relationship('RecycleBin', backref='user', lazy=True)
 
     def __repr__(self):
         return f"<User {self.username}>"
-
 
 # ------------------- File Model -------------------
 class File(db.Model):
@@ -24,7 +24,7 @@ class File(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     filename = db.Column(db.Text, nullable=False)
-    filepath = db.Column(db.Text, nullable=True)  # Allow null for consistency
+    filepath = db.Column(db.Text, nullable=True)
     uploaded_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     file_code = db.Column(db.String(100), unique=True, nullable=False)
@@ -38,7 +38,6 @@ class File(db.Model):
     def __repr__(self):
         return f"<File {self.filename}>"
 
-
 # ------------------- Recycle Bin Model -------------------
 class RecycleBin(db.Model):
     __tablename__ = 'recycle_bin'
@@ -48,7 +47,14 @@ class RecycleBin(db.Model):
     filename = db.Column(db.Text, nullable=False)
     filepath = db.Column(db.Text)
     deleted_at = db.Column(db.DateTime, default=datetime.utcnow)
-    user_id = db.Column(db.Integer, nullable=False)
+    
+    # FIXED: Added missing fields to preserve file location data
+    tags = db.Column(db.String(255))
+    cabinet = db.Column(db.String(100))
+    shelf = db.Column(db.String(100))
+    box = db.Column(db.String(100))
+
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
 
     def __repr__(self):
         return f"<RecycleBin File {self.filename}>"

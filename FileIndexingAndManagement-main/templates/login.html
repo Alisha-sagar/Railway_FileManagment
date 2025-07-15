@@ -27,19 +27,6 @@
       z-index: 0;
     }
 
-    #logo {
-      position: absolute;
-      top: 0;
-      left: 0;
-      padding: 10px;
-      z-index: 10;
-    }
-
-    #logo img {
-      height: 180px;
-      width: auto;
-    }
-
     #container {
       background: rgba(255, 255, 255, 0.95);
       width: 750px;
@@ -50,11 +37,20 @@
       display: flex;
       flex-direction: column;
       z-index: 5;
+      position: relative;
+    }
+
+    .app-title {
+      text-align: center;
+      font-size: 24px;
+      font-weight: bold;
+      color: #0D47A1;
+      padding: 20px 10px 10px;
+      border-bottom: 1px solid #eee;
     }
 
     .toggle-buttons {
       display: flex;
-      border-bottom: 1px solid #eee;
     }
 
     .toggle-buttons button {
@@ -151,17 +147,14 @@
       .panel-wrapper { flex-direction: column; width: 100%; transform: translateX(0) !important; }
       .panel { width: 100%; }
       .toggle-buttons { flex-direction: column; }
-      #logo img { height: 100px; }
     }
   </style>
 </head>
 <body>
-  <!-- Logo in Top-Left -->
-  <div id="logo">
-    <img src="{{ url_for('static', filename='main1.png') }}" alt="Logo" />
-  </div>
-
   <div id="container">
+    <!-- Title -->
+    <div class="app-title">Account Office File Compactor Management</div>
+
     <!-- Toggle Buttons -->
     <div class="toggle-buttons">
       <button id="btn-login" class="active">Login</button>
@@ -183,7 +176,7 @@
     <div class="panel-wrapper" id="panel-wrapper">
       <!-- Login Panel -->
       <div class="panel">
-        <h3>Welcome Back 👋</h3>
+        <h3>Welcome Back</h3>
         <form method="POST" action="{{ url_for('login') }}">
           <input type="text" name="username" placeholder="Username" required />
           <input type="password" name="password" placeholder="Password" required />
@@ -194,7 +187,7 @@
 
       <!-- Signup Panel -->
       <div class="panel">
-        <h3>Join Us ✨</h3>
+        <h3>Register a New User</h3>
         <form method="POST" action="{{ url_for('signup') }}">
           <input type="text" name="username" placeholder="Choose a Username" required />
           <input type="email" name="email" placeholder="Email" required>
