@@ -13,7 +13,6 @@
       overflow-x: hidden;
     }
 
-
     .video-bg {
       position: fixed;
       top: 0;
@@ -24,7 +23,6 @@
       z-index: -1;
     }
 
-
     .logo-fixed {
       position: fixed;
       top: 0;
@@ -34,52 +32,52 @@
       padding: 10px;
     }
 
-
     .container-wrapper {
       display: flex;
       align-items: center;
       justify-content: center;
-      min-height: 100vh;
+      min-height: calc(100vh - 60px); /* Account for footer */
       padding: 40px 20px;
     }
 
-
     .search-box {
       background: rgba(255, 255, 255, 0.95);
-      padding: 40px 30px;
+      padding: 50px 40px;
       border-radius: 20px;
       box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
-      max-width: 800px;
+      max-width: 900px;
       width: 100%;
+      font-size: 1.15rem;
       animation: fade-in-up 0.6s ease-out both;
       z-index: 2;
     }
-
 
     @keyframes fade-in-up {
       from { opacity: 0; transform: translateY(20px); }
       to { opacity: 1; transform: translateY(0); }
     }
 
-
     h2 {
       color: #735DA5;
       font-weight: bold;
       margin-bottom: 25px;
       text-align: center;
+      font-size: 1.8rem;
     }
 
+    .form-control {
+      font-size: 1.1rem;
+    }
 
     .form-control:focus {
       border-color: #735DA5;
       box-shadow: 0 0 0 2px rgba(115, 93, 165, 0.2);
     }
 
-
     .result-item {
       background: #f5f0fa;
       border: 1px solid #d8cde9;
-      padding: 12px 18px 50px;
+      padding: 14px 20px 50px;
       margin-bottom: 12px;
       border-radius: 10px;
       position: relative;
@@ -87,53 +85,47 @@
       display: flex;
       align-items: flex-start;
       gap: 10px;
+      font-size: 1rem;
     }
-
 
     .btn-outline-primary {
       color: #735DA5;
       border-color: #735DA5;
+      font-size: 1.05rem;
     }
-
 
     .btn-outline-primary:hover {
       background-color: #735DA5;
       color: white;
     }
 
-
     .delete-btn, .edit-btn {
       position: absolute;
       right: 10px;
       background: transparent;
       border: none;
-      font-size: 1rem;
+      font-size: 1.1rem;
       cursor: pointer;
     }
-
 
     .delete-btn {
       top: 10px;
       color: #dc3545;
     }
 
-
     .edit-btn {
       top: 38px;
       color: #0d6efd;
     }
 
-
     .delete-btn:hover, .edit-btn:hover {
       text-decoration: underline;
     }
-
 
     .checkbox-input {
       margin-top: 5px;
       transform: scale(1.2);
     }
-
 
     #loadingSpinner {
       display: none;
@@ -141,18 +133,15 @@
       margin-top: 10px;
     }
 
-
     .selected-files-box {
       margin-bottom: 10px;
     }
 
-
     .badge-selected {
       background-color: #735DA5;
       margin: 0 5px 5px 0;
-      font-size: 0.875rem;
+      font-size: 0.9rem;
     }
-
 
     .select-all-wrapper {
       display: flex;
@@ -161,30 +150,44 @@
       gap: 10px;
     }
 
+    footer {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 10px 20px;
+      background: rgba(0, 0, 0, 0.7);
+      color: #fff;
+      text-align: center;
+      font-size: 0.95rem;
+      z-index: 10;
+    }
 
     @media (max-width: 768px) {
       .search-box {
         padding: 30px 20px;
+        font-size: 1rem;
       }
-
 
       .result-item {
         flex-direction: column;
         align-items: flex-start;
       }
+
+      footer {
+        font-size: 0.8rem;
+        padding: 8px;
+      }
     }
   </style>
 
-
   <script>
     const selectedFiles = new Set();
-
 
     function reorderLocation(location) {
       const parts = location.split(' > ');
       return parts.length === 3 ? `${parts[0]} > ${parts[2]} > ${parts[1]}` : location;
     }
-
 
     function updateSelectedFilesUI() {
       const selectedContainer = document.getElementById('selectedFilesDisplay');
@@ -197,13 +200,11 @@
       });
     }
 
-
     function toggleSelection(checkbox) {
       const code = checkbox.value;
       checkbox.checked ? selectedFiles.add(code) : selectedFiles.delete(code);
       updateSelectedFilesUI();
     }
-
 
     function toggleSelectAll(checkbox) {
       const checkboxes = document.querySelectorAll('.file-checkbox');
@@ -214,31 +215,25 @@
       updateSelectedFilesUI();
     }
 
-
     async function searchFile() {
       const query = document.getElementById('searchInput').value.trim();
       const spinner = document.getElementById('loadingSpinner');
       const results = document.getElementById('results');
 
-
       results.innerHTML = '';
       spinner.style.display = 'block';
-
 
       if (!query) {
         spinner.style.display = 'none';
         return;
       }
 
-
       try {
         const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
         if (!res.ok) throw new Error("Search failed");
 
-
         const files = await res.json();
         spinner.style.display = 'none';
-
 
         if (files.length === 0) {
           results.innerHTML = '<p>No results found.</p>';
@@ -251,7 +246,6 @@
             </div>
             <div class="selected-files-box" id="selectedFilesDisplay"></div>
           `;
-
 
           files.forEach(file => {
             const isChecked = selectedFiles.has(file.file_code) ? 'checked' : '';
@@ -268,7 +262,6 @@
             `;
           });
 
-
           results.innerHTML = html;
           updateSelectedFilesUI();
         }
@@ -278,10 +271,8 @@
       }
     }
 
-
     async function deleteFile(fileCode) {
       if (!confirm(`Are you sure you want to delete file "${fileCode}"?`)) return;
-
 
       try {
         const res = await fetch('/delete_file', {
@@ -289,7 +280,6 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ file_code: fileCode })
         });
-
 
         const data = await res.json();
         alert(data.message || data.error);
@@ -300,17 +290,14 @@
       }
     }
 
-
     async function deleteSelected() {
       if (selectedFiles.size === 0) {
         alert("Please select at least one file to delete.");
         return;
       }
 
-
       const fileCodes = Array.from(selectedFiles);
       if (!confirm(`Are you sure you want to delete ${fileCodes.length} selected file(s)?`)) return;
-
 
       try {
         const res = await fetch('/delete_multiple_files', {
@@ -318,7 +305,6 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ file_codes: fileCodes })
         });
-
 
         const data = await res.json();
         alert(data.message || data.error);
@@ -329,25 +315,20 @@
       }
     }
 
-
     function editFile(fileCode) {
       window.location.href = `/edit_file/${fileCode}`;
     }
   </script>
 </head>
 
-
 <body>
-
 
   <video autoplay muted loop class="video-bg">
     <source src="{{ url_for('static', filename='train.mp4') }}" type="video/mp4">
     Your browser does not support the video tag.
   </video>
 
-
   <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" class="logo-fixed" />
-
 
   <div class="container-wrapper">
     <div class="search-box" role="search">
@@ -368,10 +349,10 @@
     </div>
   </div>
 
+  <footer>
+    Designed & Developed by IT-Cell/Accounts AGRA-NCR RAILWAYS.<br>
+    IT-Cell /Accounts AGRA Reserves copyright from 2025 onwards.
+  </footer>
 
 </body>
 </html>
-
-
-
-
