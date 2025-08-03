@@ -17,7 +17,7 @@ from models import db, User, File, RecycleBin
 app = Flask(__name__)
 app.secret_key = 'yK@p1A$9vTz3!mB2#qW8^LrXeCfHsJ0u'
 app.config['UPLOAD_FOLDER'] = 'uploads'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:Project2004@localhost/file_management'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:Password@localhost/file_management'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db.init_app(app)
