@@ -6,13 +6,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet" />
   <style>
-    body {
+    html, body {
       margin: 0;
+      padding: 0;
+      height: 100%;
       font-family: 'Segoe UI', sans-serif;
-      height: 100vh;
+    }
+
+    body {
       display: flex;
-      align-items: center;
-      justify-content: center;
+      flex-direction: column;
       background: url("{{ url_for('static', filename='main.png') }}") no-repeat center center fixed;
       background-size: cover;
       position: relative;
@@ -27,20 +30,28 @@
       z-index: 0;
     }
 
+    main {
+      flex: 1 0 auto;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+      z-index: 1;
+      padding: 40px 20px;
+    }
+
     #container {
       background: rgba(255, 255, 255, 0.95);
-      width: 400px;
+      width: 500px;
       max-width: 95%;
       border-radius: 20px;
       box-shadow: 0 15px 40px rgba(0, 0, 0, 0.25);
-      padding: 40px;
-      z-index: 5;
-      position: relative;
+      padding: 50px;
     }
 
     .app-title {
       text-align: center;
-      font-size: 24px;
+      font-size: 26px;
       font-weight: bold;
       color: #0D47A1;
       margin-bottom: 30px;
@@ -48,11 +59,11 @@
 
     form input {
       width: 100%;
-      padding: 12px 15px;
+      padding: 14px 16px;
       margin-bottom: 20px;
       border: 1px solid #ccc;
       border-radius: 8px;
-      font-size: 16px;
+      font-size: 17px;
     }
 
     form input:focus {
@@ -66,9 +77,9 @@
       background: #0D47A1;
       border: none;
       color: white;
-      padding: 12px;
+      padding: 14px;
       border-radius: 8px;
-      font-size: 16px;
+      font-size: 17px;
       font-weight: bold;
     }
 
@@ -91,30 +102,41 @@
       padding: 10px;
       margin-bottom: 15px;
     }
+
+    footer {
+      flex-shrink: 0;
+      background-color: #0D47A1;
+      color: white;
+      text-align: center;
+      padding: 10px;
+      font-size: 13px;
+    }
   </style>
 </head>
 <body>
-  <div id="container">
-    <!-- Title -->
-    <div class="app-title">Account Office File Compactor Login</div>
+  <main>
+    <div id="container">
+      <!-- Title -->
+      <div class="app-title">Account Office File Compactor Login</div>
 
-    <!-- Flash Messages -->
-    {% with messages = get_flashed_messages(with_categories=true) %}
-      {% if messages %}
-        {% for category, message in messages %}
-          <div class="alert alert-{{ category }}">{{ message }}</div>
-        {% endfor %}
-      {% endif %}
-    {% endwith %}
+      <!-- Flash Messages -->
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            <div class="alert alert-{{ category }}">{{ message }}</div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
 
-    <!-- Login Form -->
-    <form method="POST" action="{{ url_for('login') }}">
-      <input type="text" name="username" placeholder="Username" required />
-      <input type="password" name="password" placeholder="Password" required />
-      <a href="#" class="forgot-link" data-bs-toggle="modal" data-bs-target="#forgotModal">Forgot password?</a>
-      <button type="submit">Login</button>
-    </form>
-  </div>
+      <!-- Login Form -->
+      <form method="POST" action="{{ url_for('login') }}">
+        <input type="text" name="username" placeholder="Username" required />
+        <input type="password" name="password" placeholder="Password" required />
+        <a href="#" class="forgot-link" data-bs-toggle="modal" data-bs-target="#forgotModal">Forgot password?</a>
+        <button type="submit">Login</button>
+      </form>
+    </div>
+  </main>
 
   <!-- Forgot Password Modal -->
   <div class="modal fade" id="forgotModal" tabindex="-1" aria-labelledby="forgotModalLabel" aria-hidden="true">
@@ -136,6 +158,12 @@
       </div>
     </div>
   </div>
+
+  <!-- Footer -->
+  <footer>
+    Designed &amp; Developed by IT-Cell/Accounts AGRA-NCR RAILWAYS.<br>
+    IT-Cell /Accounts AGRA Reserves copyright from 2025 onwards.
+  </footer>
 
   <!-- Bootstrap JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js"></script>
