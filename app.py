@@ -39,8 +39,8 @@ def login_required(f):
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     HARDCODED_USERS = {
-        'sdfmagra': {'password': 'Admin@123', 'id': 1},
-        'adfmagra': {'password': 'Admin@1234', 'id': 2}
+        'superadmin': {'password': 'passofsuperadmin', 'id': 1},
+        'admin': {'password': 'passofadmin', 'id': 2}
     }
 
     if request.method == 'POST':
